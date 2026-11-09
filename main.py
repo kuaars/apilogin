@@ -168,6 +168,14 @@ async def get_users(db: Session = Depends(get_db)):
         for user in users
     ]
 
+@app.get("/")
+async def start(request: Request):
+    return RedirectResponse(
+        url="/register",
+        status_code=303
+    )
+
+
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()
