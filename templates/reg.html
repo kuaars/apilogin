@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f1f3f8;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            width: 350px;
+            padding: 35px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.07);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #3478f6;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            background: #3478f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #2465dc;
+        }
+
+        .error {
+            color: #e53935;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        a {
+            color: #3478f6;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>Создать аккаунт</h2>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <form action="/register" method="POST">
+
+        <input
+            type="text"
+            name="username"
+            placeholder="Придумайте логин"
+            required
+            minlength="3"
+            maxlength="30"
+        >
+
+        <input
+            type="password"
+            name="password"
+            placeholder="Придумайте пароль"
+            required
+            minlength="8"
+        >
+
+        <button type="submit">Зарегистрироваться</button>
+
+    </form>
+
+    <div class="link">
+        Уже есть аккаунт?
+        <a href="/login">Войти</a>
+    </div>
+
+</div>
+
+</body>
+</html>

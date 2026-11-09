@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в аккаунт</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f4f6fb;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 390px;
+            background: white;
+            padding: 40px 32px;
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 25px;
+            font-weight: bold;
+            color: #3478f6;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 25px;
+            margin-bottom: 10px;
+            color: #20242d;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #9298a5;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: #454b57;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #e1e5ed;
+            border-radius: 9px;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 20px;
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: #3478f6;
+            box-shadow: 0 0 0 3px rgba(52, 120, 246, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #3478f6;
+            color: white;
+            border: none;
+            border-radius: 9px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #2465dc;
+        }
+
+        .error {
+            background: #fff0f0;
+            color: #d93636;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .register {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 14px;
+            color: #858b98;
+        }
+
+        a {
+            color: #3478f6;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="logo">MY ACCOUNT</div>
+
+    <h2>С возвращением!</h2>
+
+    <p class="subtitle">
+        Войдите в свой аккаунт
+    </p>
+
+    {% if error %}
+        <div class="error">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <form action="/login" method="POST">
+
+        <label for="username">Имя пользователя</label>
+
+        <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="Введите логин"
+            required
+            autocomplete="username"
+        >
+
+        <label for="password">Пароль</label>
+
+        <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Введите пароль"
+            required
+            autocomplete="current-password"
+        >
+
+        <button type="submit">
+            Войти в аккаунт
+        </button>
+
+    </form>
+
+    <div class="register">
+        Нет аккаунта?
+        <a href="/register">Зарегистрироваться</a>
+    </div>
+
+</div>
+
+</body>
+</html>

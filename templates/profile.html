@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой профиль</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f1f3f8;
+            font-family: Arial, sans-serif;
+        }
+
+        .profile {
+            width: 350px;
+            padding: 35px;
+            background: white;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.07);
+        }
+
+        .avatar {
+            width: 85px;
+            height: 85px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #3478f6;
+            color: white;
+            border-radius: 50%;
+            font-size: 32px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        .username {
+            color: #777;
+            margin-bottom: 25px;
+        }
+
+        .logout {
+            display: block;
+            padding: 13px;
+            background: #f04444;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+
+        .logout:hover {
+            background: #d83232;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="profile">
+
+    <div class="avatar">
+        {{ username[0]|upper }}
+    </div>
+
+    <h2>Мой профиль</h2>
+
+    <p class="username">
+        @{{ username }}
+    </p>
+
+    <a href="/logout" class="logout">
+        Выйти из аккаунта
+    </a>
+
+</div>
+
+</body>
+</html>
