@@ -23,7 +23,7 @@
         <div class="order-foot">
             <strong>{{ o.total|money }}</strong>
 
-            {% if o.status != "paid" %}
+            {% if o.status in ("pending", "failed") %}
                 <form action="/orders/{{ o.id }}/pay" method="POST">
                     <button type="submit" class="btn sm">{{ "Оплатить снова" if o.status == "failed" else "Оплатить" }}</button>
                 </form>

@@ -30,7 +30,21 @@ CURRENCY = "₽"
 STATUS_LABELS = {
     "pending": "Ожидает оплаты",
     "paid": "Оплачен",
+    "processing": "Собирается",
+    "shipped": "Отправлен",
+    "delivered": "Доставлен",
+    "cancelled": "Отменён",
     "failed": "Оплата не прошла",
+}
+
+# Статусы, при которых заказ считается оплаченным (для статистики в профиле)
+PAID_STATUSES = {"paid", "processing", "shipped", "delivered"}
+
+# Контакты поддержки для профиля: поменяйте на свои
+SUPPORT = {
+    "email": "support@shop.example",
+    "telegram": "shop_support",
+    "hours": "ежедневно с 9:00 до 21:00",
 }
 
 
@@ -445,18 +459,47 @@ async def login(
 @app.get("/profile", response_class=HTMLResponse)
 async def profile(request: Request, db: Session = Depends(get_db)):
 
-    username = request.session.get("username")
+    user = get_user(request, db)
 
-    if not username:
+    if not user:
         return RedirectResponse(
             url="/login",
             status_code=303
         )
 
+    orders = db.query(Order).filter(Order.user_id == user.id).order_by(Order.id.desc()).all()
+    paid = [o for o in orders if o.status in PAID_STATUSES]
+    spent = sum(o.total or 0 for o in paid)
+
+    stats = {
+        "orders": len(orders),
+        "spent": spent,
+        "average": spent // len(paid) if paid else 0,
+        "bought": sum(i.quantity or 0 for o in paid for i in o.items),
+    }
+
+    # Сводка по магазину видна только админу
+    shop = None
+    if is_admin(user):
+        all_orders = db.query(Order).all()
+        shop = {
+            "revenue": sum(o.total or 0 for o in all_orders if o.status in PAID_STATUSES),
+            "waiting": sum(1 for o in all_orders if o.status == "pending"),
+            "in_work": sum(1 for o in all_orders if o.status in ("paid", "processing")),
+        }
+
     return templates.TemplateResponse(
         request=request,
         name="profile.html",
-        context={"username": username, "is_admin": is_admin(get_user(request, db))}
+        context={
+            "username": user.username,
+            "is_admin": is_admin(user),
+            "stats": stats,
+            "recent_orders": orders[:3],
+            "shop": shop,
+            "support": SUPPORT,
+            "cart_count": cart_count(db, user)
+        }
     )
 
 @app.get("/register")
@@ -758,7 +801,7 @@ async def pay_order_again(order_id: int, request: Request, db: Session = Depends
     order, response = load_own_order(request, db, order_id)
     if response:
         return response
-    if order.status == "paid":
+    if order.status not in ("pending", "failed"):
         return RedirectResponse(url="/orders", status_code=303)
     return start_payment(request, db, order)
 
@@ -829,7 +872,7 @@ async def admin_orders(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
         request=request,
         name="admin_orders.html",
-        context={"orders": orders}
+        context={"orders": orders, "statuses": STATUS_LABELS}
     )
 
 
@@ -920,3 +963,26 @@ async def admin_import(
 
     result = f"{stats['categories']},{stats['products']},{stats['updated']}"
     return RedirectResponse(url=f"/admin?imported={result}", status_code=303)
+
+
+@app.post("/admin/orders/{order_id}/status")
+async def admin_set_order_status(
+    order_id: int,
+    request: Request,
+    status: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    denied = admin_guard(request, db)
+    if denied:
+        return denied
+
+    order = db.get(Order, order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+    if status not in STATUS_LABELS:
+        raise HTTPException(status_code=400, detail="Неизвестный статус")
+
+    order.status = status
+    db.commit()
+
+    return RedirectResponse(url="/admin/orders?saved=1", status_code=303)

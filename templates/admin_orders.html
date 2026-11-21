@@ -9,6 +9,10 @@
 {% block content %}
 <h1>Заказы</h1>
 
+{% if request.query_params.get("saved") %}
+    <div class="ok">Статус обновлён</div>
+{% endif %}
+
 <section class="panel">
     {% if orders %}
         <div class="table-wrap">
@@ -35,7 +39,17 @@
                                 {% endfor %}
                             </td>
                             <td class="num">{{ o.total|money }}</td>
-                            <td><span class="badge {{ o.status }}">{{ o.status|status_label }}</span></td>
+                            <td>
+                                <span class="badge {{ o.status }}">{{ o.status|status_label }}</span>
+                                <form class="status-form" action="/admin/orders/{{ o.id }}/status" method="POST">
+                                    <select name="status" aria-label="Статус заказа №{{ o.id }}">
+                                        {% for key, label in statuses.items() %}
+                                            <option value="{{ key }}" {% if o.status == key %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn-soft sm">Сохранить</button>
+                                </form>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>

@@ -1,106 +1,106 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой профиль</title>
+{% extends "layout.html" %}
+{% block title %}Мой профиль{% endblock %}
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+{% block content %}
 
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #f1f3f8;
-            font-family: Arial, sans-serif;
-        }
+<section class="panel profile-head">
+    <div class="avatar">{{ username[0]|upper }}</div>
 
-        .profile {
-            width: 350px;
-            padding: 35px;
-            background: white;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.07);
-        }
-
-        .avatar {
-            width: 85px;
-            height: 85px;
-            margin: 0 auto 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #3478f6;
-            color: white;
-            border-radius: 50%;
-            font-size: 32px;
-        }
-
-        h2 {
-            margin-bottom: 10px;
-        }
-
-        .username {
-            color: #777;
-            margin-bottom: 25px;
-        }
-
-        .admin-link {
-            display: block;
-            padding: 13px;
-            margin-bottom: 10px;
-            background: #eaf1fe;
-            color: #3478f6;
-            border-radius: 8px;
-            text-decoration: none;
-        }
-
-        .logout {
-            display: block;
-            padding: 13px;
-            background: #f04444;
-            color: white;
-            border-radius: 8px;
-            text-decoration: none;
-        }
-
-        .logout:hover {
-            background: #d83232;
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="profile">
-
-    <div class="avatar">
-        {{ username[0]|upper }}
+    <div class="grow">
+        <h1>{{ username }}</h1>
+        <span class="badge {{ 'role-admin' if is_admin else 'role-user' }}">{{ "Администратор" if is_admin else "Покупатель" }}</span>
     </div>
 
-    <h2>Мой профиль</h2>
+    <a href="/logout" class="btn btn-danger sm">Выйти</a>
+</section>
 
-    <p class="username">
-        @{{ username }}
-    </p>
-
-    <a href="/orders" class="admin-link">Мои заказы</a>
-
+<div class="quick">
+    <a href="/orders" class="btn-soft">Мои заказы</a>
+    <a href="/cart" class="btn-soft">Корзина{% if cart_count %} ({{ cart_count }}){% endif %}</a>
     {% if is_admin %}
-        <a href="/admin" class="admin-link">Панель администратора</a>
+        <a href="/admin" class="btn-soft">Товары и категории</a>
+        <a href="/admin/orders" class="btn-soft">Все заказы</a>
     {% endif %}
-
-    <a href="/logout" class="logout">
-        Выйти из аккаунта
-    </a>
-
 </div>
 
-</body>
-</html>
+<div class="stats">
+    <div class="stat">
+        <span class="muted">Заказов</span>
+        <strong>{{ stats.orders }}</strong>
+    </div>
+    <div class="stat">
+        <span class="muted">Потрачено</span>
+        <strong>{{ stats.spent|money }}</strong>
+    </div>
+    <div class="stat">
+        <span class="muted">Средний чек</span>
+        <strong>{{ stats.average|money }}</strong>
+    </div>
+    <div class="stat">
+        <span class="muted">Куплено товаров</span>
+        <strong>{{ stats.bought }}</strong>
+    </div>
+</div>
+
+{% if shop %}
+<section class="panel">
+    <h2>Магазин</h2>
+    <div class="stats" style="margin: 16px 0 0;">
+        <div class="stat">
+            <span class="muted">Выручка</span>
+            <strong>{{ shop.revenue|money }}</strong>
+        </div>
+        <div class="stat">
+            <span class="muted">Ожидают оплаты</span>
+            <strong>{{ shop.waiting }}</strong>
+        </div>
+        <div class="stat">
+            <span class="muted">Оплачены, ещё не отправлены</span>
+            <strong>{{ shop.in_work }}</strong>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section class="panel">
+    <div class="order-head">
+        <h2>Последние заказы</h2>
+        {% if recent_orders %}<a href="/orders" class="btn-soft sm">Все заказы</a>{% endif %}
+    </div>
+
+    {% if recent_orders %}
+        <div>
+            {% for o in recent_orders %}
+                <div class="line">
+                    <div class="grow">
+                        <strong>Заказ №{{ o.id }}</strong>
+                        <span class="muted">{{ o.created_at.strftime("%d.%m.%Y %H:%M") if o.created_at else "" }}</span>
+                    </div>
+                    <span class="sum">{{ o.total|money }}</span>
+                    <span class="badge {{ o.status }}">{{ o.status|status_label }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="muted" style="margin-bottom: 16px;">Вы ещё ничего не заказывали.</p>
+        <a href="/" class="btn sm">В каталог</a>
+    {% endif %}
+</section>
+
+<section class="panel">
+    <h2>Поддержка</h2>
+    <p class="muted" style="margin-bottom: 16px;">Отвечаем {{ support.hours }}. Если вопрос по заказу, укажите его номер.</p>
+
+    <div class="support">
+        <a class="support-item" href="mailto:{{ support.email }}?subject={{ ('Вопрос от ' ~ username)|urlencode }}">
+            <strong>Почта</strong>
+            <span>{{ support.email }}</span>
+        </a>
+        <a class="support-item" href="https://t.me/{{ support.telegram }}" target="_blank" rel="noopener">
+            <strong>Telegram</strong>
+            <span>@{{ support.telegram }}</span>
+        </a>
+    </div>
+</section>
+
+{% endblock %}
