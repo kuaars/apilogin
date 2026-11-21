@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Магазин{% endblock %}</title>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            min-height: 100vh;
+            background: #f1f3f8;
+            font-family: Arial, sans-serif;
+            color: #20242d;
+        }
+
+        a { color: inherit; text-decoration: none; }
+
+        :focus-visible {
+            outline: 3px solid rgba(52, 120, 246, 0.35);
+            outline-offset: 2px;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: white;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .header-inner {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo { font-size: 22px; font-weight: bold; color: #3478f6; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        main { max-width: 1000px; margin: 0 auto; padding: 28px 24px 48px; }
+        h1 { font-size: 24px; margin-bottom: 20px; }
+        h2 { font-size: 18px; margin-bottom: 8px; }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.07);
+        }
+
+        .muted { color: #858b98; font-size: 13px; }
+
+        .btn, .btn-soft {
+            display: inline-block;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: bold;
+            font-family: inherit;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn { background: #3478f6; color: white; }
+        .btn:hover { background: #2465dc; }
+        .btn-soft { background: #eaf1fe; color: #3478f6; }
+        .btn-soft:hover { background: #d9e6fd; }
+        .btn-danger { background: #fff0f0; color: #d93636; }
+        .btn-danger:hover { background: #ffe1e1; }
+        .sm { padding: 8px 14px; }
+
+        .line {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 0;
+            border-top: 1px solid #eef0f5;
+        }
+
+        .line:first-child { border-top: none; padding-top: 0; }
+
+        .thumb {
+            flex: none;
+            width: 64px;
+            height: 64px;
+            border-radius: 10px;
+            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eaf1fe;
+            color: #3478f6;
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        .grow { flex: 1; min-width: 0; }
+        .grow strong { display: block; margin-bottom: 4px; }
+        .qty { display: flex; align-items: center; gap: 8px; }
+        .qty span { min-width: 24px; text-align: center; font-weight: bold; }
+        .sum { min-width: 90px; text-align: right; font-weight: bold; white-space: nowrap; }
+
+        .total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 0;
+            border-top: 1px solid #eef0f5;
+            font-size: 20px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .badge.paid { background: #eefaf1; color: #1f8a3b; }
+        .badge.pending { background: #fff6e5; color: #b36b00; }
+        .badge.failed { background: #fff0f0; color: #d93636; }
+
+        .order-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .order-items { list-style: none; margin-bottom: 14px; font-size: 14px; line-height: 1.8; }
+        .order-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
+        .center { text-align: center; padding: 48px 24px; }
+        .center .muted { margin-bottom: 20px; }
+
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 12px 10px; text-align: left; vertical-align: top; border-top: 1px solid #eef0f5; }
+        th { font-size: 12px; color: #858b98; border-top: none; white-space: nowrap; }
+        td.num { white-space: nowrap; font-weight: bold; }
+
+        @media (max-width: 640px) {
+            .line { flex-wrap: wrap; }
+            .sum { min-width: 0; }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">SHOP</a>
+        <nav class="actions">
+            {% block nav %}
+                <a href="/cart" class="btn-soft">Корзина{% if cart_count %} ({{ cart_count }}){% endif %}</a>
+                <a href="/profile" class="btn-soft">Профиль</a>
+            {% endblock %}
+        </nav>
+    </div>
+</header>
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+</body>
+</html>

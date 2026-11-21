@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block title %}Заказы{% endblock %}
+
+{% block nav %}
+    <a href="/admin" class="btn-soft">Товары</a>
+    <a href="/" class="btn-soft">В магазин</a>
+{% endblock %}
+
+{% block content %}
+<h1>Заказы</h1>
+
+<section class="panel">
+    {% if orders %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Дата</th>
+                        <th>Покупатель</th>
+                        <th>Товары</th>
+                        <th>Сумма</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orders %}
+                        <tr>
+                            <td class="num">{{ o.id }}</td>
+                            <td>{{ o.created_at.strftime("%d.%m.%Y %H:%M") if o.created_at else "" }}</td>
+                            <td>{{ o.user.username if o.user else "удалён" }}</td>
+                            <td>
+                                {% for it in o.items %}
+                                    <div>{{ it.name }}, {{ it.quantity }} × {{ it.price|money }}</div>
+                                {% endfor %}
+                            </td>
+                            <td class="num">{{ o.total|money }}</td>
+                            <td><span class="badge {{ o.status }}">{{ o.status|status_label }}</span></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="muted">Заказов пока нет.</p>
+    {% endif %}
+</section>
+{% endblock %}

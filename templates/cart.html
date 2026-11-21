@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block title %}Корзина{% endblock %}
+
+{% block content %}
+<h1>Корзина</h1>
+
+{% if items %}
+<section class="panel">
+
+    {% for i in items %}
+        <div class="line">
+            {% if i.product.image %}
+                <img class="thumb" src="/uploads/{{ i.product.image }}" alt="">
+            {% else %}
+                <div class="thumb">{{ (i.product.name or "?")[0]|upper }}</div>
+            {% endif %}
+
+            <div class="grow">
+                <strong>{{ i.product.name }}</strong>
+                <span class="muted">{{ i.product.price|money }} за штуку</span>
+            </div>
+
+            <form class="qty" action="/cart/item/{{ i.product_id }}" method="POST">
+                <button type="submit" name="action" value="dec" class="btn-soft sm" aria-label="Уменьшить количество">−</button>
+                <span>{{ i.quantity }}</span>
+                <button type="submit" name="action" value="inc" class="btn-soft sm" aria-label="Увеличить количество">+</button>
+                <button type="submit" name="action" value="remove" class="btn-danger btn sm">Удалить</button>
+            </form>
+
+            <div class="sum">{{ ((i.product.price or 0) * i.quantity)|money }}</div>
+        </div>
+    {% endfor %}
+
+    <div class="total">
+        <span>Итого</span>
+        <strong>{{ total|money }}</strong>
+    </div>
+
+    <form action="/checkout" method="POST">
+        <button type="submit" class="btn">Оформить и оплатить</button>
+    </form>
+
+</section>
+{% else %}
+<section class="panel center">
+    <h2>В корзине пусто</h2>
+    <p class="muted">Добавьте товары из каталога.</p>
+    <a href="/" class="btn">В каталог</a>
+</section>
+{% endif %}
+{% endblock %}

@@ -51,6 +51,16 @@
             margin-bottom: 25px;
         }
 
+        .admin-link {
+            display: block;
+            padding: 13px;
+            margin-bottom: 10px;
+            background: #eaf1fe;
+            color: #3478f6;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+
         .logout {
             display: block;
             padding: 13px;
@@ -79,6 +89,12 @@
     <p class="username">
         @{{ username }}
     </p>
+
+    <a href="/orders" class="admin-link">Мои заказы</a>
+
+    {% if is_admin %}
+        <a href="/admin" class="admin-link">Панель администратора</a>
+    {% endif %}
 
     <a href="/logout" class="logout">
         Выйти из аккаунта

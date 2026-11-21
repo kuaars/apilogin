@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора</title>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            min-height: 100vh;
+            background: #f1f3f8;
+            font-family: Arial, sans-serif;
+            color: #20242d;
+        }
+
+        a { color: #3478f6; text-decoration: none; font-weight: bold; }
+
+        :focus-visible {
+            outline: 3px solid rgba(52, 120, 246, 0.35);
+            outline-offset: 2px;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .header-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header h1 { font-size: 20px; }
+
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 28px 24px 48px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.07);
+        }
+
+        h2 { font-size: 18px; margin-bottom: 20px; }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: #454b57;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 18px;
+            border: 1px solid #e1e5ed;
+            border-radius: 9px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        textarea { min-height: 90px; resize: vertical; }
+
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            border-color: #3478f6;
+            box-shadow: 0 0 0 3px rgba(52, 120, 246, 0.1);
+        }
+
+        input[type="file"] { font-size: 13px; margin-bottom: 18px; max-width: 100%; }
+
+        button {
+            padding: 13px 22px;
+            background: #3478f6;
+            color: white;
+            border: none;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover { background: #2465dc; }
+
+        .error, .ok {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .error { background: #fff0f0; color: #d93636; }
+        .ok { background: #eefaf1; color: #1f8a3b; }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 0;
+            border-top: 1px solid #eef0f5;
+        }
+
+        .row:first-of-type { border-top: none; padding-top: 0; }
+
+        .thumb {
+            flex: none;
+            width: 64px;
+            height: 64px;
+            border-radius: 10px;
+            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eaf1fe;
+            color: #3478f6;
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        .meta { flex: 1; min-width: 0; }
+        .meta strong { display: block; margin-bottom: 4px; }
+        .meta span { font-size: 13px; color: #858b98; }
+
+        .photo-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+        .photo-form input[type="file"] { margin: 0; width: 210px; }
+        .photo-form button { padding: 10px 16px; }
+
+        .empty { color: #858b98; font-size: 14px; }
+
+        @media (max-width: 640px) {
+            .row { flex-wrap: wrap; }
+            .photo-form { justify-content: flex-start; width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <h1>Панель администратора</h1>
+        <div style="display:flex;gap:18px"><a href="/admin/orders">Заказы</a><a href="/">← В магазин</a></div>
+    </div>
+</header>
+
+<main>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {% if saved %}
+        <div class="ok">Сохранено</div>
+    {% endif %}
+
+    <section class="panel">
+        <h2>Новый товар</h2>
+
+        <form action="/admin/products" method="POST" enctype="multipart/form-data">
+
+            <label for="name">Название</label>
+            <input type="text" id="name" name="name" required maxlength="120">
+
+            <label for="description">Описание</label>
+            <textarea id="description" name="description" maxlength="1000"></textarea>
+
+            <label for="price">Цена</label>
+            <input type="number" id="price" name="price" min="0" step="1" required>
+
+            <label for="image">Фото (JPG, PNG, GIF, WEBP, до 5 МБ)</label>
+            <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp">
+
+            <button type="submit">Добавить товар</button>
+
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>Все товары</h2>
+
+        {% for p in products %}
+            <div class="row">
+                {% if p.image %}
+                    <img class="thumb" src="/uploads/{{ p.image }}" alt="{{ p.name }}">
+                {% else %}
+                    <div class="thumb">{{ (p.name or "?")[0]|upper }}</div>
+                {% endif %}
+
+                <div class="meta">
+                    <strong>{{ p.name }}</strong>
+                    <span>{{ p.price|money }}</span>
+                </div>
+
+                <form class="photo-form" action="/admin/products/{{ p.id }}/image" method="POST" enctype="multipart/form-data">
+                    <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp" required aria-label="Фото для товара {{ p.name }}">
+                    <button type="submit">{{ "Заменить фото" if p.image else "Добавить фото" }}</button>
+                </form>
+            </div>
+        {% else %}
+            <p class="empty">Товаров пока нет. Добавьте первый в форме выше.</p>
+        {% endfor %}
+    </section>
+
+</main>
+
+</body>
+</html>

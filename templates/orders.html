@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block title %}Мои заказы{% endblock %}
+
+{% block content %}
+<h1>Мои заказы</h1>
+
+{% for o in orders %}
+    <section class="panel">
+        <div class="order-head">
+            <div>
+                <h2>Заказ №{{ o.id }}</h2>
+                <span class="muted">{{ o.created_at.strftime("%d.%m.%Y %H:%M") if o.created_at else "" }}</span>
+            </div>
+            <span class="badge {{ o.status }}">{{ o.status|status_label }}</span>
+        </div>
+
+        <ul class="order-items">
+            {% for it in o.items %}
+                <li>{{ it.name }}, {{ it.quantity }} × {{ it.price|money }}</li>
+            {% endfor %}
+        </ul>
+
+        <div class="order-foot">
+            <strong>{{ o.total|money }}</strong>
+
+            {% if o.status != "paid" %}
+                <form action="/orders/{{ o.id }}/pay" method="POST">
+                    <button type="submit" class="btn sm">{{ "Оплатить снова" if o.status == "failed" else "Оплатить" }}</button>
+                </form>
+            {% endif %}
+        </div>
+    </section>
+{% else %}
+    <section class="panel center">
+        <h2>Заказов пока нет</h2>
+        <p class="muted">Оформите первый заказ из корзины.</p>
+        <a href="/" class="btn">В каталог</a>
+    </section>
+{% endfor %}
+{% endblock %}

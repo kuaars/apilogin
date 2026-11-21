@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block title %}Оплата заказа{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block content %}
+<section class="panel center" style="max-width: 460px; margin: 0 auto;">
+    <h1>Оплата заказа №{{ order.id }}</h1>
+    <p class="muted">Это тестовая оплата, деньги не списываются.</p>
+
+    <p style="font-size: 28px; font-weight: bold; margin: 24px 0;">{{ order.total|money }}</p>
+
+    <form action="/pay/fake/{{ order.id }}" method="POST" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button type="submit" name="result" value="success" class="btn">Оплатить</button>
+        <button type="submit" name="result" value="fail" class="btn btn-danger">Отклонить платёж</button>
+    </form>
+</section>
+{% endblock %}
