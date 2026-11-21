@@ -119,6 +119,128 @@
             height: 20px;
         }
 
+        /* ---------- Меню категорий ---------- */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .burger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            background: #eaf1fe;
+            color: #3478f6;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .burger:hover { background: #d9e6fd; }
+        .burger svg { width: 22px; height: 22px; }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            background: rgba(20, 24, 35, 0.4);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s, visibility 0.25s;
+        }
+
+        .overlay.open { opacity: 1; visibility: visible; }
+
+        .drawer {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 30;
+            width: min(320px, 85vw);
+            overflow-y: auto;
+            background: white;
+            box-shadow: 5px 0 30px rgba(0, 0, 0, 0.15);
+            transform: translateX(-100%);
+            visibility: hidden;
+            transition: transform 0.25s, visibility 0.25s;
+        }
+
+        .drawer.open { transform: none; visibility: visible; }
+
+        .drawer-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            border-bottom: 1px solid #eef0f5;
+            font-size: 18px;
+        }
+
+        .drawer-close {
+            width: 36px;
+            height: 36px;
+            background: none;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            color: #858b98;
+            cursor: pointer;
+        }
+
+        .drawer-close:hover { background: #f1f3f8; }
+
+        .cat-list { list-style: none; }
+
+        .cat-row { display: flex; align-items: center; }
+
+        .cat-row a, .cat-all {
+            flex: 1;
+            display: block;
+            padding: 13px 20px;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+
+        .cat-row a:hover, .cat-all:hover { background: #f6f8fc; }
+
+        .cat-row.active a, .cat-all.active {
+            color: #3478f6;
+            font-weight: bold;
+            background: #eaf1fe;
+        }
+
+        .cat-sub .cat-row a { padding-left: 36px; font-size: 14px; }
+        .cat-sub .cat-sub .cat-row a { padding-left: 52px; }
+        .cat-sub .cat-sub .cat-sub .cat-row a { padding-left: 68px; }
+
+        .cat-toggle {
+            flex: none;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: #858b98;
+            cursor: pointer;
+        }
+
+        .cat-toggle:hover { color: #3478f6; }
+        .cat-toggle svg { width: 18px; height: 18px; transition: transform 0.2s; }
+        .cat-toggle[aria-expanded="true"] svg { transform: rotate(90deg); }
+
+        .drawer-empty { padding: 20px; font-size: 14px; color: #858b98; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .drawer, .overlay, .cat-toggle svg { transition: none; }
+        }
+
         /* ---------- Каталог ---------- */
         main {
             max-width: 1200px;
@@ -267,10 +389,39 @@
 
 <body>
 
+{% macro cat_tree(nodes) %}
+<ul class="cat-list">
+    {% for c in nodes %}
+        <li>
+            <div class="cat-row {% if c.id == active_cat %}active{% endif %}">
+                <a href="/?cat={{ c.id }}">{{ c.name }}</a>
+                {% if c.children %}
+                    <button type="button" class="cat-toggle" aria-expanded="{{ 'true' if c.id in open_ids else 'false' }}" aria-label="Подкатегории: {{ c.name }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+                    </button>
+                {% endif %}
+            </div>
+            {% if c.children %}
+                <div class="cat-sub" {% if c.id not in open_ids %}hidden{% endif %}>
+                    {{ cat_tree(c.children) }}
+                </div>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+{% endmacro %}
+
 <header class="header">
     <div class="header-inner">
 
-        <a href="/" class="logo">SHOP</a>
+        <div class="brand">
+            <button type="button" class="burger" id="burger" aria-label="Категории" aria-expanded="false" aria-controls="drawer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+                    <path d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            <a href="/" class="logo">SHOP</a>
+        </div>
 
         <form class="search" action="/" method="GET" role="search">
             <input
@@ -281,6 +432,7 @@
                 aria-label="Поиск товаров"
                 autocomplete="off"
             >
+            {% if active_cat %}<input type="hidden" name="cat" value="{{ active_cat }}">{% endif %}
             <button type="submit">Найти</button>
         </form>
 
@@ -301,11 +453,31 @@
     </div>
 </header>
 
+<div class="overlay" id="overlay"></div>
+
+<aside class="drawer" id="drawer" aria-label="Категории">
+    <div class="drawer-head">
+        <strong>Категории</strong>
+        <button type="button" class="drawer-close" id="drawer-close" aria-label="Закрыть меню">✕</button>
+    </div>
+
+    <a href="/" class="cat-all {% if not active_cat %}active{% endif %}">Все товары</a>
+
+    {% if category_tree %}
+        {{ cat_tree(category_tree) }}
+    {% else %}
+        <p class="drawer-empty">Категорий пока нет</p>
+    {% endif %}
+</aside>
+
 <main>
 
-    {% if q %}
+    {% if q or active_cat %}
         <div class="result-info">
-            <span>По запросу «{{ q }}» найдено: {{ products|length }}</span>
+            <span>
+                {% if active_cat_name %}Категория «{{ active_cat_name }}». {% endif %}
+                {% if q %}По запросу «{{ q }}» {% endif %}найдено: {{ products|length }}
+            </span>
             <a href="/">Сбросить</a>
         </div>
     {% endif %}
@@ -329,7 +501,7 @@
             </article>
         {% else %}
             <div class="empty">
-                {% if q %}
+                {% if q or active_cat %}
                     <h2>Ничего не нашлось</h2>
                     <p>Попробуйте изменить запрос или <a href="/" style="color:#3478f6;font-weight:bold;">показать все товары</a>.</p>
                 {% else %}
@@ -341,6 +513,38 @@
     </div>
 
 </main>
+
+<script>
+(function () {
+    var burger = document.getElementById('burger');
+    var drawer = document.getElementById('drawer');
+    var overlay = document.getElementById('overlay');
+
+    function setOpen(open) {
+        drawer.classList.toggle('open', open);
+        overlay.classList.toggle('open', open);
+        burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        document.body.style.overflow = open ? 'hidden' : '';
+    }
+
+    burger.addEventListener('click', function () {
+        setOpen(!drawer.classList.contains('open'));
+    });
+    overlay.addEventListener('click', function () { setOpen(false); });
+    document.getElementById('drawer-close').addEventListener('click', function () { setOpen(false); });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { setOpen(false); }
+    });
+
+    document.querySelectorAll('.cat-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var open = btn.getAttribute('aria-expanded') !== 'true';
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            btn.parentNode.nextElementSibling.hidden = !open;
+        });
+    });
+})();
+</script>
 
 </body>
 </html>

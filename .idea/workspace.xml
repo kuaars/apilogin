@@ -4,19 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e3ec0076-134f-4d10-8ea4-b0befbbd9dae" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/payments.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin_orders.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/cart.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/layout.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/main.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/orders.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/pay_fake.html" afterDir="false" />
+    <list default="true" id="e3ec0076-134f-4d10-8ea4-b0befbbd9dae" name="Changes" comment="add func">
+      <change afterPath="$PROJECT_DIR$/example/catalog_example.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/profile.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/admin.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/main.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/main.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/users.db" beforeDir="false" afterPath="$PROJECT_DIR$/users.db" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -49,23 +43,23 @@
 }]]></component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000000719714517" />
-      <entry key="S2" value="1.0163791011799521" />
-      <entry key="S5" value="1.1930705466788214" />
-      <entry key="S10" value="1.4393979365891714" />
-      <entry key="S30" value="1.7602437117653444" />
-      <entry key="S60" value="1.8724577773654985" />
-      <entry key="M2" value="1.9569694243334728" />
-      <entry key="M5" value="2.194892177234194" />
-      <entry key="M10" value="2.4574837805263408" />
-      <entry key="M15" value="2.596349887508783" />
-      <entry key="M30" value="2.7877627020343354" />
-      <entry key="H1" value="3.9054868959220177" />
-      <entry key="H2" value="11.693425432153719" />
-      <entry key="H4" value="28.582445661955028" />
-      <entry key="D1" value="65.69506321620887" />
-      <entry key="W1" value="76.1043242583898" />
+      <entry key="MS100" value="1.0003381615001339" />
+      <entry key="MS500" value="1.2087713543252152" />
+      <entry key="S2" value="2.0910746065299795" />
+      <entry key="S5" value="2.909271825524712" />
+      <entry key="S10" value="3.373689154196763" />
+      <entry key="S30" value="3.7697645310648644" />
+      <entry key="S60" value="3.895921351941243" />
+      <entry key="M2" value="4.109671722503929" />
+      <entry key="M5" value="4.800862938779136" />
+      <entry key="M10" value="5.49453641945716" />
+      <entry key="M15" value="5.865660595581931" />
+      <entry key="M30" value="6.364212197822385" />
+      <entry key="H1" value="7.597636340180698" />
+      <entry key="H2" value="15.225238002392564" />
+      <entry key="H4" value="32.005155750946486" />
+      <entry key="D1" value="69.47214697389664" />
+      <entry key="W1" value="80.06738145623031" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -87,23 +81,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9460576467255959" />
-      <entry key="MS500" value="0.98897098785524" />
-      <entry key="S2" value="1.0135819942901545" />
-      <entry key="S5" value="1.1918283460073706" />
-      <entry key="S10" value="1.438691315226538" />
-      <entry key="S30" value="1.7599710663381398" />
-      <entry key="S60" value="1.8723135397804518" />
-      <entry key="M2" value="1.956864772808734" />
-      <entry key="M5" value="2.194741985043788" />
-      <entry key="M10" value="2.4573409639641133" />
-      <entry key="M15" value="2.5962303414934196" />
-      <entry key="M30" value="2.7876856590093975" />
-      <entry key="H1" value="3.9053897761088883" />
-      <entry key="H2" value="11.693178651111818" />
-      <entry key="H4" value="28.582112747607177" />
-      <entry key="D1" value="65.694932429653" />
-      <entry key="W1" value="76.10430258515295" />
+      <entry key="MS100" value="0.9865639067304529" />
+      <entry key="MS500" value="1.2051356186003574" />
+      <entry key="S2" value="2.0891993137180855" />
+      <entry key="S5" value="2.9081375641362324" />
+      <entry key="S10" value="3.373010203772743" />
+      <entry key="S30" value="3.7695060673473373" />
+      <entry key="S60" value="3.8957864689310973" />
+      <entry key="M2" value="4.109594567120988" />
+      <entry key="M5" value="4.800778958594027" />
+      <entry key="M10" value="5.494435048535515" />
+      <entry key="M15" value="5.8655651019888975" />
+      <entry key="M30" value="6.364142133075313" />
+      <entry key="H1" value="7.597544516527427" />
+      <entry key="H2" value="15.224999925886827" />
+      <entry key="H4" value="32.0048289771714" />
+      <entry key="D1" value="69.47201653468966" />
+      <entry key="W1" value="80.06735977975784" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -156,9 +150,22 @@
       <option name="presentableId" value="Default" />
       <updated>1794250634573</updated>
     </task>
+    <task id="LOCAL-00001" summary="add func">
+      <option name="closed" value="true" />
+      <created>1795290042352</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1795290042352</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="add func" />
+    <option name="LAST_COMMIT_MESSAGE" value="add func" />
   </component>
 </project>

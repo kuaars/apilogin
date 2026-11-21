@@ -81,6 +81,34 @@
             box-shadow: 0 0 0 3px rgba(52, 120, 246, 0.1);
         }
 
+        select {
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 18px;
+            border: 1px solid #e1e5ed;
+            border-radius: 9px;
+            font-size: 14px;
+            font-family: inherit;
+            background: white;
+        }
+
+        .cat-form { display: flex; gap: 8px; margin-top: 8px; }
+        .cat-form select { margin: 0; padding: 8px; font-size: 13px; min-width: 0; }
+        .cat-form button { padding: 8px 14px; }
+
+        pre {
+            background: #f6f8fc;
+            border-radius: 9px;
+            padding: 14px;
+            margin-top: 12px;
+            font-size: 12px;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+
+        summary { cursor: pointer; color: #3478f6; font-weight: bold; font-size: 14px; }
+        ul.format { margin: 12px 0 0 20px; font-size: 14px; line-height: 1.7; color: #454b57; }
+
         input[type="file"] { font-size: 13px; margin-bottom: 18px; max-width: 100%; }
 
         button {
@@ -169,6 +197,43 @@
         <div class="ok">Сохранено</div>
     {% endif %}
 
+    {% if import_result %}
+        <div class="ok">
+            Импорт завершён. Новых категорий: {{ import_result.categories }},
+            новых товаров: {{ import_result.products }},
+            обновлено товаров: {{ import_result.updated }}
+        </div>
+    {% endif %}
+
+    <section class="panel">
+        <h2>Категории</h2>
+
+        {% if category_options %}
+            <div style="margin-bottom: 20px; font-size: 14px; line-height: 1.8;">
+                {% for c in category_options %}
+                    <div style="padding-left: {{ c.depth * 20 }}px;">{{ c.name }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form action="/admin/categories" method="POST">
+
+            <label for="cat-name">Название категории</label>
+            <input type="text" id="cat-name" name="name" required maxlength="80">
+
+            <label for="cat-parent">Родительская категория</label>
+            <select id="cat-parent" name="parent_id">
+                <option value="">Без родителя (верхний уровень)</option>
+                {% for c in category_options %}
+                    <option value="{{ c.id }}">{{ "— " * c.depth }}{{ c.name }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Добавить категорию</button>
+
+        </form>
+    </section>
+
     <section class="panel">
         <h2>Новый товар</h2>
 
@@ -183,12 +248,66 @@
             <label for="price">Цена</label>
             <input type="number" id="price" name="price" min="0" step="1" required>
 
+            <label for="category">Категория</label>
+            <select id="category" name="category_id">
+                <option value="">Без категории</option>
+                {% for c in category_options %}
+                    <option value="{{ c.id }}">{{ "— " * c.depth }}{{ c.name }}</option>
+                {% endfor %}
+            </select>
+
             <label for="image">Фото (JPG, PNG, GIF, WEBP, до 5 МБ)</label>
             <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp">
 
             <button type="submit">Добавить товар</button>
 
         </form>
+    </section>
+
+    <section class="panel">
+        <h2>Импорт из JSON</h2>
+
+        <form action="/admin/import" method="POST" enctype="multipart/form-data">
+            <label for="catalog">Файл каталога (.json, до 2 МБ)</label>
+            <input type="file" id="catalog" name="file" accept="application/json,.json" required>
+            <button type="submit">Загрузить</button>
+        </form>
+
+        <details style="margin-top: 20px;">
+            <summary>Формат файла</summary>
+            <ul class="format">
+                <li><b>categories</b>: список категорий. У каждой обязательно <b>name</b>, необязательно <b>products</b> и <b>subcategories</b> (такие же категории внутри, до 6 уровней).</li>
+                <li>У товара обязательны <b>name</b> и <b>price</b> (целое число не меньше 0), <b>description</b> необязательно.</li>
+                <li><b>products</b> на верхнем уровне файла: товары без категории.</li>
+                <li>Повторный импорт не создаёт дубликатов: категории и товары с теми же названиями на том же уровне обновляются.</li>
+                <li>Если в файле ошибка, не добавится ничего. Фото к товарам добавляются потом в списке ниже.</li>
+            </ul>
+{% raw %}<pre>{
+  "categories": [
+    {
+      "name": "Электроника",
+      "products": [
+        {"name": "Беспроводные наушники", "description": "Bluetooth 5.3", "price": 4990}
+      ],
+      "subcategories": [
+        {
+          "name": "Компьютеры",
+          "products": [
+            {"name": "Игровая мышь", "price": 3290}
+          ],
+          "subcategories": [
+            {"name": "Клавиатуры", "products": [{"name": "Механическая клавиатура", "price": 7490}]}
+          ]
+        }
+      ]
+    },
+    {"name": "Дом", "subcategories": [{"name": "Кухня"}]}
+  ],
+  "products": [
+    {"name": "Подарочная карта", "price": 1000}
+  ]
+}</pre>{% endraw %}
+        </details>
     </section>
 
     <section class="panel">
@@ -205,6 +324,16 @@
                 <div class="meta">
                     <strong>{{ p.name }}</strong>
                     <span>{{ p.price|money }}</span>
+
+                    <form class="cat-form" action="/admin/products/{{ p.id }}/category" method="POST">
+                        <select name="category_id" aria-label="Категория товара {{ p.name }}">
+                            <option value="">Без категории</option>
+                            {% for c in category_options %}
+                                <option value="{{ c.id }}" {% if p.category_id == c.id %}selected{% endif %}>{{ "— " * c.depth }}{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit">Сохранить</button>
+                    </form>
                 </div>
 
                 <form class="photo-form" action="/admin/products/{{ p.id }}/image" method="POST" enctype="multipart/form-data">

@@ -8,12 +8,13 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
+import json
 import uuid
 from urllib.parse import urlparse
 from pathlib import Path
 
 from database import Base, SessionLocal, engine
-from models import User, CartItem, Order, OrderItem, product as Product
+from models import User, CartItem, Order, OrderItem, Category, product as Product
 from payments import FakePaymentProvider, get_provider
 
 app = FastAPI()
@@ -52,6 +53,8 @@ def add_missing_columns():
     with engine.begin() as conn:
         if "image" not in {c["name"] for c in insp.get_columns("products")}:
             conn.execute(text("ALTER TABLE products ADD COLUMN image VARCHAR"))
+        if "category_id" not in {c["name"] for c in insp.get_columns("products")}:
+            conn.execute(text("ALTER TABLE products ADD COLUMN category_id INTEGER"))
         if "admin" not in {c["name"] for c in insp.get_columns("users")}:
             conn.execute(text("ALTER TABLE users ADD COLUMN admin BOOLEAN DEFAULT 0"))
 
@@ -123,6 +126,18 @@ async def save_image(file: UploadFile):
 
 def render_admin(request: Request, db: Session, error=None, status_code=200):
     products = db.query(Product).order_by(Product.id.desc()).all()
+    categories = db.query(Category).order_by(Category.id).all()
+    options = list(flatten_tree(build_tree(categories)))
+
+    import_result = None
+    imported = request.query_params.get("imported")
+    if imported:
+        try:
+            created, added, updated = (int(x) for x in imported.split(","))
+            import_result = {"categories": created, "products": added, "updated": updated}
+        except ValueError:
+            pass
+
     return templates.TemplateResponse(
         request=request,
         name="admin.html",
@@ -130,9 +145,159 @@ def render_admin(request: Request, db: Session, error=None, status_code=200):
             "products": products,
             "error": error,
             "saved": request.query_params.get("saved"),
+            "category_options": options,
+            "category_names": {c["id"]: c["name"] for c in options},
+            "import_result": import_result,
         },
         status_code=status_code
     )
+
+
+# ---------------------------- Категории ----------------------------
+
+def build_tree(categories):
+    """Плоский список категорий -> дерево словарей {id, name, children}."""
+    nodes = {c.id: {"id": c.id, "name": c.name, "children": []} for c in categories}
+    roots = []
+    for c in categories:
+        if c.parent_id in nodes:
+            nodes[c.parent_id]["children"].append(nodes[c.id])
+        else:
+            roots.append(nodes[c.id])
+    return roots
+
+
+def flatten_tree(nodes, depth=0):
+    for n in nodes:
+        yield {"id": n["id"], "name": n["name"], "depth": depth}
+        yield from flatten_tree(n["children"], depth + 1)
+
+
+def category_family(categories, cat_id):
+    """id категории и всех её подкатегорий (любой глубины)."""
+    ids = {cat_id}
+    changed = True
+    while changed:
+        changed = False
+        for c in categories:
+            if c.parent_id in ids and c.id not in ids:
+                ids.add(c.id)
+                changed = True
+    return ids
+
+
+def category_ancestors(categories, cat_id):
+    by_id = {c.id: c for c in categories}
+    ids = set()
+    cur = by_id.get(cat_id)
+    while cur and cur.parent_id in by_id and cur.parent_id not in ids:
+        ids.add(cur.parent_id)
+        cur = by_id[cur.parent_id]
+    return ids
+
+
+def parse_category_id(db: Session, value: str):
+    """'' -> None (без категории). Несуществующая категория -> ValueError."""
+    if not value or not value.isdigit():
+        return None
+    if not db.get(Category, int(value)):
+        raise ValueError("Категория не найдена")
+    return int(value)
+
+
+# ---------------------------- Импорт каталога из JSON ----------------------------
+
+MAX_IMPORT_SIZE = 2 * 1024 * 1024  # 2 МБ
+MAX_CATEGORY_DEPTH = 6
+
+
+def import_products(db: Session, items, category_id, path, stats):
+    if not isinstance(items, list):
+        raise ValueError(f"{path}: ожидается список")
+
+    for i, item in enumerate(items):
+        where = f"{path}[{i}]"
+        if not isinstance(item, dict):
+            raise ValueError(f"{where}: ожидается объект")
+
+        name = item.get("name")
+        price = item.get("price")
+        description = item.get("description", "")
+
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError(f"{where}: у товара нужно поле name")
+        if isinstance(price, bool) or not isinstance(price, int) or price < 0:
+            raise ValueError(f"{where}: price должна быть целым числом не меньше 0")
+        if not isinstance(description, str):
+            raise ValueError(f"{where}: description должно быть строкой")
+
+        name = name.strip()
+        existing = db.query(Product).filter(
+            Product.name == name,
+            Product.category_id == category_id
+        ).first()
+
+        if existing:
+            existing.price = price
+            existing.description = description.strip()
+            stats["updated"] += 1
+        else:
+            db.add(Product(
+                name=name,
+                description=description.strip(),
+                price=price,
+                category_id=category_id
+            ))
+            stats["products"] += 1
+        db.flush()
+
+
+def import_category(db: Session, node, parent_id, path, stats, depth):
+    if depth > MAX_CATEGORY_DEPTH:
+        raise ValueError(f"{path}: слишком глубокая вложенность (максимум {MAX_CATEGORY_DEPTH} уровней)")
+    if not isinstance(node, dict):
+        raise ValueError(f"{path}: ожидается объект")
+
+    name = node.get("name")
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError(f"{path}: у категории нужно поле name")
+    name = name.strip()
+
+    category = db.query(Category).filter(
+        Category.name == name,
+        Category.parent_id == parent_id
+    ).first()
+
+    if not category:
+        category = Category(name=name, parent_id=parent_id)
+        db.add(category)
+        db.flush()
+        stats["categories"] += 1
+
+    import_products(db, node.get("products", []), category.id, f"{path}.products", stats)
+
+    subcategories = node.get("subcategories", [])
+    if not isinstance(subcategories, list):
+        raise ValueError(f"{path}.subcategories: ожидается список")
+    for i, sub_node in enumerate(subcategories):
+        import_category(db, sub_node, category.id, f"{path}.subcategories[{i}]", stats, depth + 1)
+
+
+def import_catalog(db: Session, data):
+    """Добавляет категории и товары из JSON. Существующие совпадения обновляет, дубликатов не создаёт."""
+    if not isinstance(data, dict):
+        raise ValueError("Корень файла должен быть объектом { ... }")
+
+    stats = {"categories": 0, "products": 0, "updated": 0}
+
+    categories = data.get("categories", [])
+    if not isinstance(categories, list):
+        raise ValueError("categories: ожидается список")
+    for i, node in enumerate(categories):
+        import_category(db, node, None, f"categories[{i}]", stats, 1)
+
+    import_products(db, data.get("products", []), None, "products", stats)
+    return stats
 
 
 def back_url(request: Request, default: str = "/") -> str:
@@ -183,10 +348,26 @@ def load_own_order(request: Request, db: Session, order_id: int):
 async def main(
     request: Request,
     q: str = "",
+    cat: str = "",
     db: Session = Depends(get_db)
 ):
     q = q.strip()
+    cat_id = int(cat) if cat.isdigit() else None
+    categories = db.query(Category).order_by(Category.id).all()
     products = db.query(Product).order_by(Product.id.desc()).all()
+
+    active_cat_name = None
+    open_ids = set()
+    if cat_id is not None:
+        current = next((c for c in categories if c.id == cat_id), None)
+        if current:
+            active_cat_name = current.name
+            # раскрываем в меню путь до выбранной категории
+            open_ids = category_ancestors(categories, cat_id) | {cat_id}
+            family = category_family(categories, cat_id)
+            products = [p for p in products if p.category_id in family]
+        else:
+            cat_id = None
 
     # Фильтруем в Python: SQLite LIKE не игнорирует регистр у кириллицы
     if q:
@@ -206,7 +387,11 @@ async def main(
             "products": products,
             "q": q,
             "is_admin": is_admin(user),
-            "cart_count": cart_count(db, user)
+            "cart_count": cart_count(db, user),
+            "category_tree": build_tree(categories),
+            "active_cat": cat_id,
+            "active_cat_name": active_cat_name,
+            "open_ids": open_ids
         }
     )
 
@@ -379,6 +564,7 @@ async def add_product(
     name: str = Form(...),
     description: str = Form(""),
     price: int = Form(...),
+    category_id: str = Form(""),
     image: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
@@ -391,6 +577,11 @@ async def add_product(
         return render_admin(request, db, error="Укажите название и цену не меньше 0", status_code=400)
 
     try:
+        cat_id = parse_category_id(db, category_id)
+    except ValueError as e:
+        return render_admin(request, db, error=str(e), status_code=400)
+
+    try:
         filename = await save_image(image)
     except ValueError as e:
         return render_admin(request, db, error=str(e), status_code=400)
@@ -399,7 +590,8 @@ async def add_product(
         name=name,
         description=description.strip(),
         price=price,
-        image=filename
+        image=filename,
+        category_id=cat_id
     ))
     db.commit()
 
@@ -639,3 +831,92 @@ async def admin_orders(request: Request, db: Session = Depends(get_db)):
         name="admin_orders.html",
         context={"orders": orders}
     )
+
+
+# ---------------------------- Категории и импорт в админке ----------------------------
+
+@app.post("/admin/categories")
+async def add_category(
+    request: Request,
+    name: str = Form(...),
+    parent_id: str = Form(""),
+    db: Session = Depends(get_db)
+):
+    denied = admin_guard(request, db)
+    if denied:
+        return denied
+
+    name = name.strip()
+    if not name:
+        return render_admin(request, db, error="Укажите название категории", status_code=400)
+
+    try:
+        parent = parse_category_id(db, parent_id)
+    except ValueError as e:
+        return render_admin(request, db, error=str(e), status_code=400)
+
+    if db.query(Category).filter(Category.name == name, Category.parent_id == parent).first():
+        return render_admin(request, db, error="Такая категория уже есть на этом уровне", status_code=400)
+
+    db.add(Category(name=name, parent_id=parent))
+    db.commit()
+
+    return RedirectResponse(url="/admin?saved=1", status_code=303)
+
+
+@app.post("/admin/products/{product_id}/category")
+async def set_product_category(
+    product_id: int,
+    request: Request,
+    category_id: str = Form(""),
+    db: Session = Depends(get_db)
+):
+    denied = admin_guard(request, db)
+    if denied:
+        return denied
+
+    item = db.get(Product, product_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+
+    try:
+        item.category_id = parse_category_id(db, category_id)
+    except ValueError as e:
+        return render_admin(request, db, error=str(e), status_code=400)
+
+    db.commit()
+    return RedirectResponse(url="/admin?saved=1", status_code=303)
+
+
+@app.post("/admin/import")
+async def admin_import(
+    request: Request,
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
+    denied = admin_guard(request, db)
+    if denied:
+        return denied
+
+    if file is None or not file.filename:
+        return render_admin(request, db, error="Выберите JSON-файл", status_code=400)
+
+    raw = await file.read(MAX_IMPORT_SIZE + 1)
+    if len(raw) > MAX_IMPORT_SIZE:
+        return render_admin(request, db, error="Файл больше 2 МБ", status_code=400)
+
+    try:
+        data = json.loads(raw.decode("utf-8-sig"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+        return render_admin(request, db, error=f"Не удалось прочитать JSON: {e}", status_code=400)
+
+    # Всё или ничего: при ошибке в любом месте файла в базу не попадёт ничего
+    try:
+        stats = import_catalog(db, data)
+        db.commit()
+    except ValueError as e:
+        db.rollback()
+        return render_admin(request, db, error=str(e), status_code=400)
+
+    result = f"{stats['categories']},{stats['products']},{stats['updated']}"
+    return RedirectResponse(url=f"/admin?imported={result}", status_code=303)

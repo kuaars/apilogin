@@ -20,6 +20,7 @@ class product(Base):
     description = Column(String)
     price = Column(Integer)
     image = Column(String)  # имя файла в папке uploads/
+    category_id = Column(Integer, ForeignKey('categories.id'))
 
 
 class CartItem(Base):
@@ -54,3 +55,10 @@ class OrderItem(Base):
     name = Column(String)
     price = Column(Integer)
     quantity = Column(Integer)
+
+
+class Category(Base):
+    __tablename__ = 'categories'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    parent_id = Column(Integer, ForeignKey('categories.id'))  # None = верхний уровень

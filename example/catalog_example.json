@@ -1,0 +1,42 @@
+{
+  "categories": [
+    {
+      "name": "Электроника",
+      "products": [
+        {"name": "Беспроводные наушники", "description": "Bluetooth 5.3, до 30 часов работы", "price": 4990}
+      ],
+      "subcategories": [
+        {
+          "name": "Компьютеры",
+          "products": [
+            {"name": "Игровая мышь", "description": "16 000 DPI, 6 программируемых кнопок", "price": 3290},
+            {"name": "Монитор 27\"", "description": "IPS, 2560×1440, 165 Гц", "price": 24990}
+          ],
+          "subcategories": [
+            {
+              "name": "Клавиатуры",
+              "products": [
+                {"name": "Механическая клавиатура", "description": "Тихие переключатели, подсветка", "price": 7490}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Аудио",
+          "products": [
+            {"name": "Портативная колонка", "description": "Защита от воды, 12 часов музыки", "price": 2990}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Дом",
+      "subcategories": [
+        {"name": "Кухня", "products": [{"name": "Электрический чайник", "price": 1890}]}
+      ]
+    }
+  ],
+  "products": [
+    {"name": "Подарочная карта", "description": "Номинал 1000", "price": 1000}
+  ]
+}
