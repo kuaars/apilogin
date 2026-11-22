@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from starlette.middleware.sessions import SessionMiddleware
-
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
 import json
@@ -25,7 +25,7 @@ app.add_middleware(
 )
 
 templates = Jinja2Templates(directory="templates")
-
+app.mount("/static", StaticFiles(directory="static"), name="static")
 CURRENCY = "₽"
 STATUS_LABELS = {
     "pending": "Ожидает оплаты",
@@ -60,6 +60,14 @@ provider = get_provider()
 
 Base.metadata.create_all(bind=engine)
 
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: StarletteHTTPException):
+    return templates.TemplateResponse(
+        request=request,
+        name="404.html",
+        context={},
+        status_code=404
+    )
 
 def add_missing_columns():
     """create_all не меняет существующие таблицы, поэтому докидываем новые колонки."""
@@ -563,18 +571,6 @@ async def register(
         url="/login",
         status_code=303
     )
-
-@app.get("/users")
-async def get_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-
-    return [
-        {
-            "id": user.id,
-            "username": user.username
-        }
-        for user in users
-    ]
 
 @app.get("/")
 async def start(request: Request):

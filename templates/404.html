@@ -1,0 +1,86 @@
+
+{% extends "layout.html" %}
+
+{% block title %}Страница не найдена — SHOP{% endblock %}
+
+{% block nav %}
+    <a href="/" class="btn-soft">На главную</a>
+{% endblock %}
+
+{% block content %}
+<style>
+    .error-page {
+        min-height: 65vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .error-card {
+        width: 100%;
+        max-width: 520px;
+        padding: 48px 32px;
+        background: white;
+        border-radius: 18px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.07);
+    }
+
+    .error-code {
+        font-size: clamp(90px, 20vw, 150px);
+        line-height: 1;
+        font-weight: bold;
+        color: #3478f6;
+        letter-spacing: -8px;
+        margin-bottom: 20px;
+    }
+
+    .error-title {
+        font-size: 25px;
+        color: #20242d;
+        margin-bottom: 12px;
+    }
+
+    .error-description {
+        color: #858b98;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 28px;
+    }
+
+    .error-actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 480px) {
+        .error-card {
+            padding: 36px 20px;
+        }
+
+        .error-title {
+            font-size: 21px;
+        }
+    }
+</style>
+
+<div class="error-page">
+    <div class="error-card">
+        <div class="error-code">404</div>
+
+        <h1 class="error-title">Страница не найдена</h1>
+
+        <p class="error-description">
+            Похоже, такой страницы не существует или она была перемещена.
+            Проверьте адрес или вернитесь в каталог магазина.
+        </p>
+
+        <div class="error-actions">
+            <a href="/" class="btn">Вернуться на главную</a>
+            <a href="/cart" class="btn-soft">Открыть корзину</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
