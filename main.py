@@ -37,10 +37,10 @@ STATUS_LABELS = {
     "failed": "Оплата не прошла",
 }
 
-# Статусы, при которых заказ считается оплаченным (для статистики в профиле)
+                                                                            
 PAID_STATUSES = {"paid", "processing", "shipped", "delivered"}
 
-# Контакты поддержки для профиля: поменяйте на свои
+                                                   
 SUPPORT = {
     "email": "support@shop.example",
     "telegram": "shop_support",
@@ -55,7 +55,7 @@ def money(value):
 templates.env.filters["money"] = money
 templates.env.filters["status_label"] = lambda s: STATUS_LABELS.get(s, s)
 
-# Платёжная система выбирается переменной окружения PAYMENT_PROVIDER (см. payments.py)
+                                                                                      
 provider = get_provider()
 
 Base.metadata.create_all(bind=engine)
@@ -87,7 +87,7 @@ UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 МБ
+MAX_IMAGE_SIZE = 5 * 1024 * 1024        
 
 pwd_context = PasswordHasher()
 
@@ -129,7 +129,7 @@ async def save_image(file: UploadFile):
     if len(data) > MAX_IMAGE_SIZE:
         raise ValueError("Файл больше 5 МБ")
 
-    # Тип определяем по содержимому, а не по имени файла
+                                                        
     if data.startswith(b"\xff\xd8\xff"):
         ext = ".jpg"
     elif data.startswith(b"\x89PNG\r\n\x1a\n"):
@@ -175,7 +175,7 @@ def render_admin(request: Request, db: Session, error=None, status_code=200):
     )
 
 
-# ---------------------------- Категории ----------------------------
+                                                                     
 
 def build_tree(categories):
     """Плоский список категорий -> дерево словарей {id, name, children}."""
@@ -227,9 +227,9 @@ def parse_category_id(db: Session, value: str):
     return int(value)
 
 
-# ---------------------------- Импорт каталога из JSON ----------------------------
+                                                                                   
 
-MAX_IMPORT_SIZE = 2 * 1024 * 1024  # 2 МБ
+MAX_IMPORT_SIZE = 2 * 1024 * 1024        
 MAX_CATEGORY_DEPTH = 6
 
 
@@ -384,14 +384,14 @@ async def main(
         current = next((c for c in categories if c.id == cat_id), None)
         if current:
             active_cat_name = current.name
-            # раскрываем в меню путь до выбранной категории
+                                                           
             open_ids = category_ancestors(categories, cat_id) | {cat_id}
             family = category_family(categories, cat_id)
             products = [p for p in products if p.category_id in family]
         else:
             cat_id = None
 
-    # Фильтруем в Python: SQLite LIKE не игнорирует регистр у кириллицы
+                                                                       
     if q:
         needle = q.casefold()
         products = [
@@ -486,7 +486,7 @@ async def profile(request: Request, db: Session = Depends(get_db)):
         "bought": sum(i.quantity or 0 for o in paid for i in o.items),
     }
 
-    # Сводка по магазину видна только админу
+                                            
     shop = None
     if is_admin(user):
         all_orders = db.query(Order).all()
@@ -670,7 +670,7 @@ async def set_product_image(
     return RedirectResponse(url="/admin?saved=1", status_code=303)
 
 
-# ---------------------------- Корзина ----------------------------
+                                                                   
 
 @app.post("/cart/add/{product_id}")
 async def cart_add(product_id: int, request: Request, db: Session = Depends(get_db)):
@@ -746,7 +746,7 @@ async def cart_item(
     return RedirectResponse(url="/cart", status_code=303)
 
 
-# ---------------------------- Заказ и оплата ----------------------------
+                                                                          
 
 @app.post("/checkout")
 async def checkout(request: Request, db: Session = Depends(get_db)):
@@ -758,7 +758,7 @@ async def checkout(request: Request, db: Session = Depends(get_db)):
     if not items:
         return RedirectResponse(url="/cart", status_code=303)
 
-    # Цены берём из базы, а не от клиента
+                                         
     order = Order(user_id=user.id, status="pending", total=0)
     for i in items:
         price = i.product.price or 0
@@ -772,7 +772,7 @@ async def checkout(request: Request, db: Session = Depends(get_db)):
         db.delete(i)
 
     db.add(order)
-    db.flush()  # получаем order.id
+    db.flush()                     
 
     return start_payment(request, db, order)
 
@@ -802,7 +802,7 @@ async def pay_order_again(order_id: int, request: Request, db: Session = Depends
     return start_payment(request, db, order)
 
 
-# Страницы фейковой оплаты. Работают только при PAYMENT_PROVIDER=fake.
+                                                                      
 @app.get("/pay/fake/{order_id}", response_class=HTMLResponse)
 async def fake_pay_page(order_id: int, request: Request, db: Session = Depends(get_db)):
     if not isinstance(provider, FakePaymentProvider):
@@ -839,7 +839,7 @@ async def fake_pay_confirm(
     return RedirectResponse(url="/orders", status_code=303)
 
 
-# Сюда настоящая платёжка шлёт уведомления об оплате
+                                                    
 @app.post("/payments/webhook")
 async def payment_webhook(request: Request, db: Session = Depends(get_db)):
     try:
@@ -855,7 +855,7 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
     return {"ok": True}
 
 
-# ---------------------------- Заказы в админке ----------------------------
+                                                                            
 
 @app.get("/admin/orders", response_class=HTMLResponse)
 async def admin_orders(request: Request, db: Session = Depends(get_db)):
@@ -872,7 +872,7 @@ async def admin_orders(request: Request, db: Session = Depends(get_db)):
     )
 
 
-# ---------------------------- Категории и импорт в админке ----------------------------
+                                                                                        
 
 @app.post("/admin/categories")
 async def add_category(
@@ -949,7 +949,7 @@ async def admin_import(
     except (UnicodeDecodeError, json.JSONDecodeError) as e:
         return render_admin(request, db, error=f"Не удалось прочитать JSON: {e}", status_code=400)
 
-    # Всё или ничего: при ошибке в любом месте файла в базу не попадёт ничего
+                                                                             
     try:
         stats = import_catalog(db, data)
         db.commit()

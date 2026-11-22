@@ -48,26 +48,26 @@ class FakePaymentProvider(PaymentProvider):
         raise ValueError("Фейковая оплата не использует вебхуки")
 
 
-# Пример каркаса настоящей платёжки:
-#
-# class MyGatewayProvider(PaymentProvider):
-#     def create_payment(self, order, return_url):
-#         resp = requests.post("https://api.gateway.example/payments", json={
-#             "amount": order.total, "order_id": order.id, "return_url": return_url,
-#         }, headers={"Authorization": f"Bearer {os.environ['GATEWAY_KEY']}"})
-#         data = resp.json()
-#         return {"payment_id": data["id"], "redirect_url": data["pay_url"]}
-#
-#     def parse_webhook(self, body, headers):
-#         # 1) сверить подпись из headers с HMAC от body, иначе raise ValueError
-#         # 2) разобрать JSON и вернуть payment_id и success
-#         ...
+                                    
+ 
+                                           
+                                                  
+                                                                             
+                                                                                    
+                                                                              
+                            
+                                                                            
+ 
+                                             
+                                                                                
+                                                            
+             
 
 
 def get_provider() -> PaymentProvider:
     name = os.getenv("PAYMENT_PROVIDER", "fake")
     if name == "fake":
         return FakePaymentProvider()
-    # if name == "mygateway":
-    #     return MyGatewayProvider()
+                             
+                                    
     raise RuntimeError(f"Неизвестная платёжная система: {name}")

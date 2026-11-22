@@ -19,7 +19,7 @@ class product(Base):
     name = Column(String)
     description = Column(String)
     price = Column(Integer)
-    image = Column(String)  # имя файла в папке uploads/
+    image = Column(String)                              
     category_id = Column(Integer, ForeignKey('categories.id'))
 
 
@@ -38,8 +38,8 @@ class Order(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     total = Column(Integer, default=0)
-    status = Column(String, default="pending")  # pending / paid / failed
-    payment_id = Column(String)  # id платежа в платёжной системе
+    status = Column(String, default="pending")                           
+    payment_id = Column(String)                                  
     created_at = Column(DateTime, default=datetime.now)
 
     user = relationship("User")
@@ -51,7 +51,7 @@ class OrderItem(Base):
     id = Column(Integer, primary_key=True)
     order_id = Column(Integer, ForeignKey('orders.id'))
     product_id = Column(Integer)
-    # название и цена копируются в момент заказа, чтобы правки товара не меняли старые заказы
+                                                                                             
     name = Column(String)
     price = Column(Integer)
     quantity = Column(Integer)
@@ -61,4 +61,4 @@ class Category(Base):
     __tablename__ = 'categories'
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    parent_id = Column(Integer, ForeignKey('categories.id'))  # None = верхний уровень
+    parent_id = Column(Integer, ForeignKey('categories.id'))                          
